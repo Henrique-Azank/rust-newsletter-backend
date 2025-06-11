@@ -7,17 +7,27 @@
 
 // Library dependencies
 use rust_newsletter_backend::run;
+use std::net::TcpListener;
 
 /**
  * Function to spawn our test server so we can simulate
  * the actual server running in a given port
  */
-fn spawn_app() {
+fn spawn_app() -> String {
+    // Instantiate a TCP listener on any available port
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to any address");
+
+    // Get the port number from the listener
+    let port = listener.local_addr().unwrap().port();
+
     // Get the server instance from the run function
-    let server = run().expect("Failed to start server");
+    let server = run(listener).expect("Failed to start server");
 
     // Run the server in the background
     let _ = tokio::spawn(server);
+
+    // Return the address of the server
+    format!("http://127.0.0.1:{}", port)
 }
 
 /**
@@ -26,14 +36,14 @@ fn spawn_app() {
 #[tokio::test]
 async fn test_health_check() {
     // Spawn the test server
-    spawn_app();
+    let server_address = spawn_app();
 
     // Create a client to make requests
     let client = reqwest::Client::new();
 
     // Perform the health check request
     let response = client
-        .get("http://127.0.0.1:8000/health")
+        .get(&format!("{}/health", server_address))
         .send()
         .await
         .expect("Failed to execute the health request");

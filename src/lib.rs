@@ -6,6 +6,7 @@
 
 // Base dependencies
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, dev::Server, web};
+use std::net::TcpListener;
 
 /**
  * General async function to handle the greeting endpoints
@@ -34,7 +35,7 @@ async fn health_check() -> impl Responder {
  * HTTP server run function for the general application
  * binaries - Marked as public for the executable to use
  */
-pub fn run() -> Result<Server, std::io::Error> {
+pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     // Start the HTTP server
     let server = HttpServer::new(|| {
         /*
@@ -50,7 +51,7 @@ pub fn run() -> Result<Server, std::io::Error> {
             .route("/{name}", web::get().to(greet_response))
     })
     // Bind to the specified address and port
-    .bind("127.0.0.1:8000")?
+    .listen(listener)?
     // Start the server and listen for incoming requests
     .run();
 
